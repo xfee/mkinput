@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+  <defs>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+    <linearGradient id="phoneGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f0f9ff"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+    <linearGradient id="serverGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f0fdf4"/>
+      <stop offset="100%" stop-color="#dcfce7"/>
+    </linearGradient>
+    <linearGradient id="windowGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fefce8"/>
+      <stop offset="100%" stop-color="#fef9c3"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Step indicator -->
+  <rect x="30" y="10" width="840" height="36" rx="18" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <circle cx="55" cy="28" r="10" fill="#16a34a"/>
+  <text x="55" y="33" text-anchor="middle" font-size="12" fill="#fff" font-weight="700">1</text>
+  <text x="72" y="33" font-size="13" fill="#166534" font-weight="500">Go 启动 Web 服务（端口 9999）</text>
+  <circle cx="300" cy="28" r="10" fill="#2563eb"/>
+  <text x="300" y="33" text-anchor="middle" font-size="12" fill="#fff" font-weight="700">2</text>
+  <text x="317" y="33" font-size="13" fill="#1e40af" font-weight="500">手机浏览器访问 http://电脑IP:9999</text>
+  <circle cx="620" cy="28" r="10" fill="#9333ea"/>
+  <text x="620" y="33" text-anchor="middle" font-size="12" fill="#fff" font-weight="700">3</text>
+  <text x="637" y="33" font-size="13" fill="#6b21a8" font-weight="500">输入文字 → 实时同步到电脑焦点窗口</text>
+
+  <!-- Phone browser box -->
+  <rect x="30" y="65" width="280" height="280" rx="16" fill="url(#phoneGrad)" stroke="#93c5fd" stroke-width="2"/>
+  <text x="170" y="97" text-anchor="middle" font-size="15" font-weight="600" fill="#1e40af">📱 手机浏览器</text>
+
+  <!-- URL bar -->
+  <rect x="50" y="112" width="240" height="28" rx="14" fill="#fff" stroke="#bfdbfe" stroke-width="1"/>
+  <text x="170" y="131" text-anchor="middle" font-size="11" fill="#64748b">http://192.168.x.x:9999</text>
+
+  <rect x="55" y="150" width="230" height="150" rx="8" fill="#fff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="170" y="178" text-anchor="middle" font-size="13" font-weight="600" fill="#475569">文本输入框</text>
+  <text x="170" y="198" text-anchor="middle" font-size="11" fill="#94a3b8">（输入即发送）</text>
+  <line x1="75" y1="213" x2="265" y2="213" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="170" y="234" text-anchor="middle" font-size="11" fill="#64748b">在此输入，实时同步到电脑...</text>
+  <line x1="75" y1="250" x2="265" y2="250" stroke="#e2e8f0" stroke-width="1"/>
+  <circle cx="100" cy="274" r="5" fill="#34c759"/>
+  <text x="115" y="278" font-size="11" fill="#64748b">已连接 — 输入即发送</text>
+
+  <text x="170" y="325" text-anchor="middle" font-size="11" fill="#64748b">支持：键盘 · 语音输入 · 粘贴文本</text>
+
+  <!-- Arrow from phone to server -->
+  <line x1="310" y1="200" x2="410" y2="200" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <text x="360" y="188" text-anchor="middle" font-size="11" fill="#2563eb" font-weight="500">WebSocket 通信</text>
+  <text x="360" y="218" text-anchor="middle" font-size="10" fill="#60a5fa">实时发送完整文本</text>
+
+  <!-- Windows Go backend box -->
+  <rect x="420" y="55" width="290" height="300" rx="16" fill="url(#serverGrad)" stroke="#86efac" stroke-width="2"/>
+  <text x="565" y="87" text-anchor="middle" font-size="15" font-weight="600" fill="#166534">🖥️ Windows Go 后端</text>
+
+  <rect x="445" y="100" width="240" height="45" rx="8" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5"/>
+  <text x="565" y="120" text-anchor="middle" font-size="13" font-weight="600" fill="#166534">Web 服务（端口 9999）</text>
+  <text x="565" y="137" text-anchor="middle" font-size="11" fill="#4ade80">HTTP + WebSocket</text>
+
+  <rect x="445" y="156" width="240" height="85" rx="8" fill="#fff" stroke="#bbf7d0" stroke-width="1.5"/>
+  <text x="565" y="178" text-anchor="middle" font-size="13" font-weight="600" fill="#475569">文本差异比较</text>
+  <text x="465" y="198" font-size="11" fill="#64748b">1. 计算公共前缀</text>
+  <text x="465" y="216" font-size="11" fill="#64748b">2. 退格删除旧后缀</text>
+  <text x="465" y="234" font-size="11" fill="#64748b">3. 发送新文字 / 回车</text>
+
+  <rect x="445" y="252" width="240" height="85" rx="8" fill="#fefce8" stroke="#fde68a" stroke-width="1.5"/>
+  <text x="565" y="274" text-anchor="middle" font-size="13" font-weight="600" fill="#92400e">Windows SendInput API</text>
+  <text x="465" y="294" font-size="11" fill="#a16207">user32.dll!SendInput</text>
+  <text x="465" y="312" font-size="11" fill="#a16207">Text / Backspace / Enter</text>
+
+  <!-- Arrow from server to window -->
+  <line x1="710" y1="200" x2="800" y2="200" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <text x="755" y="188" text-anchor="middle" font-size="11" fill="#16a34a" font-weight="500">模拟键盘输入</text>
+  <text x="755" y="218" text-anchor="middle" font-size="10" fill="#4ade80">不占剪贴板</text>
+
+  <!-- Focused window box -->
+  <rect x="810" y="90" width="220" height="220" rx="16" fill="url(#windowGrad)" stroke="#fde68a" stroke-width="2"/>
+  <text x="920" y="122" text-anchor="middle" font-size="15" font-weight="600" fill="#854d0e">🎯 当前焦点窗口</text>
+
+  <rect x="835" y="142" width="170" height="145" rx="8" fill="#fff" stroke="#fef08a" stroke-width="1.5"/>
+  <text x="920" y="168" text-anchor="middle" font-size="12" font-weight="600" fill="#475569">支持的应用</text>
+  <text x="855" y="192" font-size="11" fill="#64748b">· 微信</text>
+  <text x="855" y="210" font-size="11" fill="#64748b">· 浏览器</text>
+  <text x="855" y="228" font-size="11" fill="#64748b">· 记事本</text>
+  <text x="855" y="246" font-size="11" fill="#64748b">· VS Code</text>
+  <text x="855" y="264" font-size="11" fill="#64748b">· Word / QQ 等</text>
+</svg>

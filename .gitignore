@@ -1,0 +1,13 @@
+# 编译产物
+build/
+
+# IDE
+.vscode/
+.trae/
+.obsidian/
+
+tmp/
+# 测试二进制
+*.test
+
+todo.md

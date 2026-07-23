@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>秒开输入</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0F1117;
+    --surface: #181B24;
+    --border: #262B36;
+    --text: #E4E7EC;
+    --text-muted: #6B7280;
+    --accent: #F0973B;
+    --green: #4ADE80;
+    --red: #F87171;
+    --radius: 14px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header row: title left · status right ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0 12px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .header .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+  .header .status .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+  }
+  .header .status.on { color: var(--green); }
+  .header .status.on .dot {
+    background: var(--green);
+    box-shadow: 0 0 7px rgba(74, 222, 128, 0.5);
+  }
+  .header .status.off { color: var(--text-muted); }
+  .header .status.off .dot {
+    background: var(--red);
+    box-shadow: 0 0 5px rgba(248, 113, 113, 0.4);
+  }
+
+  /* ── Textarea ── */
+  .input-wrap {
+    position: relative;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    transition: border-color 0.4s ease;
+  }
+  .input-wrap::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: var(--radius);
+    z-index: -1;
+    opacity: 0;
+    background: linear-gradient(135deg, var(--accent), #F0C060);
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+  .input-wrap.live { border-color: transparent; }
+  .input-wrap.live::after {
+    opacity: 1;
+    animation: breathe 3s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.85; }
+  }
+
+  textarea {
+    display: block;
+    width: 100%;
+    height: 180px;
+    padding: 16px;
+    font-family: inherit;
+    font-size: 18px;
+    line-height: 1.65;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius);
+    resize: none;
+    outline: none;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  textarea::placeholder { color: #3D4352; }
+
+  /* ── Spacer fills the gap ── */
+  .spacer { flex: 1; min-height: 16px; }
+
+  /* ── Toggle row ── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .toggle-row label {
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .switch-track {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    border-radius: 13px;
+    background: var(--border);
+    cursor: pointer;
+    transition: background 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .switch-track.on { background: var(--accent); }
+  .switch-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--text);
+    transition: transform 0.25s ease;
+    pointer-events: none;
+  }
+  .switch-track.on .switch-thumb { transform: translateX(20px); }
+
+  /* ── Utility buttons ── */
+  .utils {
+    display: flex;
+    padding: 8px 0;
+  }
+  .utils button {
+    flex: 1;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .utils button + button {
+    margin-left: 8px;
+  }
+  .utils button:active {
+    transform: scale(0.96);
+    background: var(--border);
+  }
+  .utils .btn-backspace { border-color: #E56050; color: #E56050; }
+  .utils .btn-backspace:active { background: #E56050; color: #fff; }
+  .utils .btn-clear { border-color: #6B8FA3; color: #6B8FA3; }
+  .utils .btn-clear:active { background: #6B8FA3; color: #0F1117; }
+
+  /* ── Top action button (重新上屏) ── */
+  .utils .btn-send-top {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .utils .btn-send-top:active {
+    background: var(--accent);
+    color: #0F1117;
+  }
+
+  /* ── Bottom action button (发送回车) ── */
+  .btn-enter-bottom {
+    width: 100%;
+    height: 64px;
+    border: none;
+    border-radius: var(--radius);
+    background: #0D241A;
+    border: 1.5px solid #4ADE80;
+    color: #4ADE80;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-enter-bottom:active {
+    background: #4ADE80;
+    color: #0F1117;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .input-wrap::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header: title + status -->
+  <div class="header">
+    <h1>秒开输入</h1>
+    <div class="status off" id="status">
+      <span class="dot"></span>
+      <span id="statusText">等待连接</span>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-wrap" id="wrap">
+    <textarea id="input" placeholder="开始输入..." autofocus></textarea>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- Auto-send toggle -->
+  <div class="toggle-row">
+    <label id="toggleLabel">自动发送</label>
+    <div id="btnToggle" class="switch-track on">
+      <div class="switch-thumb"></div>
+    </div>
+  </div>
+
+  <!-- Utility buttons -->
+  <div class="utils">
+    <button id="btnSend" class="btn-send-top">↻ 重新上屏</button>
+    <button id="btnBackspace" class="btn-backspace">⌫ 发送退格</button>
+    <button id="btnClear" class="btn-clear">✕ 清空</button>
+  </div>
+
+  <!-- Bottom action: 发送回车 -->
+  <button id="btnEnter" class="btn-enter-bottom">↵ 发送回车</button>
+</div>
+
+<script>
+(function() {
+  // ── DOM 引用 ──
+  var input = document.getElementById('input');       // 输入框
+  var wrap = document.getElementById('wrap');         // 输入框外层容器（用于呼吸灯动画）
+  var statusEl = document.getElementById('status');   // 连接状态指示器
+  var statusText = document.getElementById('statusText');
+
+  // ── WebSocket 连接管理 ──
+  var ws = null;                // WebSocket 连接实例
+  var reconnectTimer = null;    // 自动重连定时器
+  var connected = false;        // 当前是否已连接
+
+  // 更新状态指示器的样式和文字
+  // cls: 'on' | 'off' | 'err'
+  function setStatus(cls, text) {
+    statusEl.className = 'status ' + cls;
+    statusText.textContent = text;
+  }
+
+  // 建立 WebSocket 连接到后端
+  function connect() {
+    var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(protocol + '//' + location.host + '/ws');
+
+    // 连接成功：更新状态，开启输入框呼吸灯动画
+    ws.onopen = function() {
+      connected = true;
+      wrap.classList.add('live');
+      setStatus('on', '已连接');
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    };
+
+    // 连接断开：关闭呼吸灯，3 秒后自动重连
+    ws.onclose = function() {
+      connected = false;
+      wrap.classList.remove('live');
+      setStatus('off', '已断开');
+      ws = null;
+      scheduleReconnect();
+    };
+
+    // 连接出错
+    ws.onerror = function() {
+      setStatus('err', '连接失败');
+    };
+  }
+
+  // 自动重连：3 秒后尝试重新连接，避免频繁重连
+  function scheduleReconnect() {
+    if (reconnectTimer) return;
+    reconnectTimer = setTimeout(function() {
+      reconnectTimer = null;
+      connect();
+    }, 3000);
+  }
+
+  // ── 文本发送控制 ──
+  var composing = false;        // 是否处于输入法组合状态（中文/语音输入）
+  var lastSent = '';            // 上次成功发送的内容，用于去重
+  var debounceTimer = null;     // 键盘输入防抖定时器
+  var autoSend = true;          // 自动发送开关
+
+  // 自动发送开关切换
+  var btnToggle = document.getElementById('btnToggle');
+  btnToggle.addEventListener('click', function() {
+    autoSend = !autoSend;
+    btnToggle.className = 'switch-track' + (autoSend ? ' on' : '');
+  });
+
+  // 核心发送函数：通过 WebSocket 将文本发送到后端
+  // 命令类消息（以 __ 开头）不走去重逻辑
+  function send(text) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    var t = text || input.value;
+    if (!t) return;
+    // 普通文本（非命令）如果内容和上次相同则跳过
+    if (t.substring(0, 2) !== '__' && t === lastSent) return;
+    ws.send(t);
+    lastSent = t;
+    setStatus('on', '已发送 ✓');
+    setTimeout(function() { setStatus('on', '已连接'); }, 1200);
+  }
+
+  // 发送输入框当前全部内容
+  function sendText() {
+    send(input.value);
+  }
+
+  // ── 输入事件监听 ──
+
+  // 输入法开始组合（语音识别 / 拼音选词）：暂停自动发送
+  input.addEventListener('compositionstart', function() {
+    composing = true;
+    if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+  });
+
+  // 输入法组合结束（确认文字）：300ms 后自动发送
+  // 适用于语音输入识别完成、或输入法选字确认
+  input.addEventListener('compositionend', function() {
+    composing = false;
+    if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+    var text = input.value.trim();
+    if (text && autoSend) {
+      setTimeout(function() {
+        if (!composing) sendText();
+      }, 300);
+    }
+  });
+
+  // 键盘输入（非组合状态）：停止打字 800ms 后自动发送
+  // 防抖避免每打一个字就发送一次
+  input.addEventListener('input', function() {
+    if (composing || !autoSend) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() {
+      debounceTimer = null;
+      sendText();
+    }, 800);
+  });
+
+  // ── 按钮事件绑定 ──
+
+  // 重新上屏：先通知后端重置状态，再发送全部内容，然后清空输入框
+  document.getElementById('btnSend').addEventListener('click', function() {
+    var text = input.value;
+    if (!text) return;
+    send('__RESEND__');
+    sendText();
+    input.value = '';
+    input.focus();
+  });
+
+  // 发送退格：本地删最后一个字符 + 通知后端发送退格指令
+  document.getElementById('btnBackspace').addEventListener('click', function() {
+    var v = input.value;
+    if (v) {
+      var runes = Array.from(v);
+      runes.pop();
+      input.value = runes.join('');
+    }
+    send('__BACKSPACE__');
+    input.focus();
+  });
+
+  // 发送回车：通知后端按回车，清空输入框
+  document.getElementById('btnEnter').addEventListener('click', function() {
+    send('__ENTER__');
+    input.value = '';
+    lastSent = '';
+    input.focus();
+  });
+
+  // 清空输入框
+  document.getElementById('btnClear').addEventListener('click', function() {
+    input.value = '';
+    lastSent = '';
+    input.focus();
+  });
+
+  // 点击空白区域自动聚焦输入框（弹出键盘）
+  document.querySelector('.app').addEventListener('click', function(e) {
+    if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON' && e.target.closest('.switch-track') === null) {
+      input.focus();
+    }
+  });
+
+  // 启动
+  connect();
+})();
+</script>
+</body>
+</html>
