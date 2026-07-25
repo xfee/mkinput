@@ -55,7 +55,7 @@ mkinput/
 # 开发调试（有控制台日志）
 go run .
 
-# 热启动
+# 热更新
  go install github.com/air-verse/air@latest 
  air
  
