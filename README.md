@@ -30,7 +30,9 @@
 - **回车**：发送回车键
 - **安全原则**：除显式点击"退格"外，不做任何自动删除、退格或整体替换
 
+## 页面截图
 
+![手机端页面](assets/UI.jpg)
 
 
 ## 项目结构
@@ -42,7 +44,8 @@ mkinput/
 ├── internal/keyboard/sendinput.go # Windows SendInput API syscall 封装
 ├── assets/
 │   ├── architecture.svg           # 架构图
-│   └── icon.ico                   # 托盘图标
+│   ├── icon.ico                   # 托盘图标
+│   └── UI.jpg                     # 手机端页面截图
 ├── png2ico.py                     # PNG 转 ICO 工具
 ├── go.mod / go.sum                # Go 模块依赖
 └── README.md
@@ -64,7 +67,15 @@ go run .
 # 打包
 go build -ldflags -H=windowsgui -o build/mkinput.exe .
 
-暂不构建macOS， 因为Windows没有豆包输入法
+# 打tag
+git push origin v1.2.0
+
+# 发布release
+gh release create v1.2.0 build/mkinput.exe -t "v1.2.0"
+
+
+
+
 ```
 
 ***
