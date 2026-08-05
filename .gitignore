@@ -1,6 +1,9 @@
 # 编译产物
 build/
 
+# Go Windows 资源文件（构建时自动生成）
+*.syso
+
 # IDE
 .vscode/
 .trae/
@@ -11,3 +14,4 @@ tmp/
 *.test
 
 todo.md
+icon.rc

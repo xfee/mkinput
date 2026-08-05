@@ -45,85 +45,54 @@ var (
 	lastErrorProc = kernel32.NewProc("GetLastError")
 )
 
-// SendText 将 text 逐字符通过 SendInput 模拟键盘输入到当前焦点窗口。
-// 每个字符先发送 KEYDOWN（UNICODE），再发送 KEYUP。
-// 返回首个出错字符的 error，全部成功则返回 nil。
-func SendText(text string) error {
-	runes := []rune(text)
-	for i, r := range runes {
-		inp := input{
-			_type: inputKeyboard,
-			ki: keybdInput{
-				wScan:   uint16(r),
-				dwFlags: keyeventfUnicode,
-			},
-		}
-
-		// KEYDOWN
-		ret, _, _ := sendInputProc.Call(
-			uintptr(1),
-			uintptr(unsafe.Pointer(&inp)),
-			uintptr(unsafe.Sizeof(inp)),
-		)
-		if ret == 0 {
-			errCode, _, _ := lastErrorProc.Call()
-			return fmt.Errorf("KEYDOWN 失败 [%d/%d] char=U+%04X  GetLastError=%d  size=%d",
-				i+1, len(runes), r, errCode, unsafe.Sizeof(inp))
-		}
-
-		// KEYUP
-		inp.ki.dwFlags = keyeventfUnicode | keyeventfKeyUp
-		ret, _, _ = sendInputProc.Call(
-			uintptr(1),
-			uintptr(unsafe.Pointer(&inp)),
-			uintptr(unsafe.Sizeof(inp)),
-		)
-		if ret == 0 {
-			errCode, _, _ := lastErrorProc.Call()
-			return fmt.Errorf("KEYUP 失败 [%d/%d] char=U+%04X  GetLastError=%d",
-				i+1, len(runes), r, errCode)
-		}
+// sendBatch 一次 SendInput 调用批量提交一组 INPUT 事件。
+func sendBatch(events []input) error {
+	if len(events) == 0 {
+		return nil
+	}
+	ret, _, _ := sendInputProc.Call(
+		uintptr(len(events)),
+		uintptr(unsafe.Pointer(&events[0])),
+		uintptr(unsafe.Sizeof(input{})),
+	)
+	if ret == 0 {
+		errCode, _, _ := lastErrorProc.Call()
+		return fmt.Errorf("SendInput 失败: count=%d GetLastError=%d", len(events), errCode)
 	}
 	return nil
 }
 
-// SendBackspace 模拟 n 次退格键（删除 count 个字符）。
-// 每按一次发送 KEYDOWN + KEYUP，使用虚拟键码 VK_BACK（0x08）。
-func SendBackspace(count int) error {
-	for i := 0; i < count; i++ {
-		// KEYDOWN
-		inp := input{
-			_type: inputKeyboard,
-			ki: keybdInput{
-				wVk:    vkBack,
-				dwFlags: 0,
-			},
-		}
-		ret, _, _ := sendInputProc.Call(
-			uintptr(1),
-			uintptr(unsafe.Pointer(&inp)),
-			uintptr(unsafe.Sizeof(inp)),
-		)
-		if ret == 0 {
-			errCode, _, _ := lastErrorProc.Call()
-			return fmt.Errorf("BACKSPACE KEYDOWN 失败 [%d/%d] GetLastError=%d",
-				i+1, count, errCode)
-		}
-
-		// KEYUP
-		inp.ki.dwFlags = keyeventfKeyUp
-		ret, _, _ = sendInputProc.Call(
-			uintptr(1),
-			uintptr(unsafe.Pointer(&inp)),
-			uintptr(unsafe.Sizeof(inp)),
-		)
-		if ret == 0 {
-			errCode, _, _ := lastErrorProc.Call()
-			return fmt.Errorf("BACKSPACE KEYUP 失败 [%d/%d] GetLastError=%d",
-				i+1, count, errCode)
-		}
+// SendText 将 text 通过一次 SendInput 调用批量输入到当前焦点窗口。
+// 每个字符对应 KEYDOWN（UNICODE）+ KEYUP 两个 INPUT 事件，
+// 全部打包成一个数组一次性提交，不做逐字符模拟，避免中途被打断。
+func SendText(text string) error {
+	runes := []rune(text)
+	if len(runes) == 0 {
+		return nil
 	}
-	return nil
+
+	// 每个字符需要 KEYDOWN + KEYUP 两个事件
+	events := make([]input, 0, len(runes)*2)
+	for _, r := range runes {
+		events = append(events, input{
+			_type: inputKeyboard,
+			ki:    keybdInput{wScan: uint16(r), dwFlags: keyeventfUnicode},
+		})
+		events = append(events, input{
+			_type: inputKeyboard,
+			ki:    keybdInput{wScan: uint16(r), dwFlags: keyeventfUnicode | keyeventfKeyUp},
+		})
+	}
+	return sendBatch(events)
+}
+
+// SendBackspace 向当前焦点窗口发送一次退格键（VK_BACK），删除光标前一个字符。
+// 仅在用户显式点击手机端"退格"按钮时调用，程序不会自动删除电脑文本。
+func SendBackspace() error {
+	return sendBatch([]input{
+		{_type: inputKeyboard, ki: keybdInput{wVk: vkBack, dwFlags: 0}},
+		{_type: inputKeyboard, ki: keybdInput{wVk: vkBack, dwFlags: keyeventfKeyUp}},
+	})
 }
 
 // SendEnter 模拟一次回车键（VK_RETURN）。

@@ -130,41 +130,57 @@
   /* ── Spacer fills the gap ── */
   .spacer { flex: 1; min-height: 16px; }
 
-  /* ── Toggle row ── */
-  .toggle-row {
+  /* ── 模式切换（一行内：模式 + 开关 + 小字说明） ── */
+  .mode-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 4px 0;
+    gap: 8px;
+    padding: 8px 0 4px;
   }
-  .toggle-row label {
+  .mode-label {
     font-size: 14px;
+    font-weight: 600;
     color: var(--text-muted);
-    cursor: pointer;
+    white-space: nowrap;
   }
-  .switch-track {
-    position: relative;
-    width: 46px;
-    height: 26px;
-    border-radius: 13px;
-    background: var(--border);
+  .mode-switch {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+  }
+  .mode-btn {
+    flex: 1;
+    height: 34px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
-    transition: background 0.25s ease;
+    transition: all 0.2s ease;
     -webkit-tap-highlight-color: transparent;
   }
-  .switch-track.on { background: var(--accent); }
-  .switch-thumb {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--text);
-    transition: transform 0.25s ease;
-    pointer-events: none;
+  .mode-btn.active {
+    background: var(--accent);
+    color: #0F1117;
   }
-  .switch-track.on .switch-thumb { transform: translateX(20px); }
+  .mode-hint {
+    flex: 1;
+    min-width: 0;
+    font-size: 11px;
+    line-height: 1.25;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   /* ── Utility buttons ── */
   .utils {
@@ -173,7 +189,7 @@
   }
   .utils button {
     flex: 1;
-    height: 44px;
+    height: 48px;
     border-radius: 12px;
     border: 1px solid var(--border);
     background: var(--surface);
@@ -195,12 +211,7 @@
     transform: scale(0.96);
     background: var(--border);
   }
-  .utils .btn-backspace { border-color: #E56050; color: #E56050; }
-  .utils .btn-backspace:active { background: #E56050; color: #fff; }
-  .utils .btn-clear { border-color: #6B8FA3; color: #6B8FA3; }
-  .utils .btn-clear:active { background: #6B8FA3; color: #0F1117; }
-
-  /* ── Top action button (重新上屏) ── */
+  /* ── 发送按钮 ── */
   .utils .btn-send-top {
     border-color: var(--accent);
     color: var(--accent);
@@ -209,27 +220,17 @@
     background: var(--accent);
     color: #0F1117;
   }
+  .utils .btn-backspace { border-color: #E56050; color: #E56050; }
+  .utils .btn-backspace:active { background: #E56050; color: #fff; }
 
-  /* ── Bottom action button (发送回车) ── */
-  .btn-enter-bottom {
-    width: 100%;
-    height: 64px;
-    border: none;
-    border-radius: var(--radius);
+  /* ── 回车按钮（同行内绿色高亮） ── */
+  .utils .btn-enter-row {
     background: #0D241A;
     border: 1.5px solid #4ADE80;
     color: #4ADE80;
-    font-size: 18px;
     font-weight: 700;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
   }
-  .btn-enter-bottom:active {
+  .utils .btn-enter-row:active {
     background: #4ADE80;
     color: #0F1117;
   }
@@ -257,23 +258,22 @@
 
   <div class="spacer"></div>
 
-  <!-- Auto-send toggle -->
-  <div class="toggle-row">
-    <label id="toggleLabel">自动发送</label>
-    <div id="btnToggle" class="switch-track on">
-      <div class="switch-thumb"></div>
+  <!-- 模式切换：自动模式 / 手动模式 -->
+  <div class="mode-row">
+    <span class="mode-label">模式</span>
+    <div class="mode-switch" id="modeSwitch" role="group" aria-label="发送模式">
+      <button class="mode-btn active" data-mode="auto">自动模式</button>
+      <button class="mode-btn" data-mode="manual">手动模式</button>
     </div>
+    <span class="mode-hint" id="modeHint">输入后自动上屏并清空</span>
   </div>
 
-  <!-- Utility buttons -->
+  <!-- Action buttons: 发送 / 退格 / 回车 -->
   <div class="utils">
-    <button id="btnSend" class="btn-send-top">↻ 重新上屏</button>
-    <button id="btnBackspace" class="btn-backspace">⌫ 发送退格</button>
-    <button id="btnClear" class="btn-clear">✕ 清空</button>
+    <button id="btnSend" class="btn-send-top">发送</button>
+    <button id="btnBackspace" class="btn-backspace">退格</button>
+    <button id="btnEnter" class="btn-enter-row">回车</button>
   </div>
-
-  <!-- Bottom action: 发送回车 -->
-  <button id="btnEnter" class="btn-enter-bottom">↵ 发送回车</button>
 </div>
 
 <script>
@@ -337,14 +337,42 @@
   var composing = false;        // 是否处于输入法组合状态（中文/语音输入）
   var lastSent = '';            // 上次成功发送的内容，用于去重
   var debounceTimer = null;     // 键盘输入防抖定时器
-  var autoSend = true;          // 自动发送开关
 
-  // 自动发送开关切换
-  var btnToggle = document.getElementById('btnToggle');
-  btnToggle.addEventListener('click', function() {
-    autoSend = !autoSend;
-    btnToggle.className = 'switch-track' + (autoSend ? ' on' : '');
+  // ── 模式切换：auto=自动发送后清屏 / manual=手动发送后清屏 ──
+  var mode = 'auto';
+  try { mode = localStorage.getItem('mkinput_mode') || 'auto'; } catch(e) {}
+  var autoSend = mode === 'auto';
+
+  var modeSwitch = document.getElementById('modeSwitch');
+  var modeBtns = modeSwitch.querySelectorAll('.mode-btn');
+  var modeHint = document.getElementById('modeHint');
+
+  function applyMode() {
+    autoSend = mode === 'auto';
+    modeBtns.forEach(function(b) {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    modeHint.textContent = autoSend ? '输入后自动上屏并清空' : '点击"发送"后上屏并清空';
+    try { localStorage.setItem('mkinput_mode', mode); } catch(e) {}
+  }
+  modeBtns.forEach(function(b) {
+    b.addEventListener('click', function() {
+      if (b.dataset.mode === mode) return;
+      mode = b.dataset.mode;
+      applyMode();
+    });
   });
+  applyMode();
+
+  // 发送成功后清空输入框，并通知后端重置去重基准（下一段内容以追加方式上屏）
+  function clearAfterSend() {
+    input.value = '';
+    lastSent = '';
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send('__CLEARED__');
+    }
+    focusInput();
+  }
 
   // 核心发送函数：通过 WebSocket 将文本发送到后端
   // 命令类消息（以 __ 开头）不走去重逻辑
@@ -381,7 +409,10 @@
     var text = input.value.trim();
     if (text && autoSend) {
       setTimeout(function() {
-        if (!composing) sendText();
+        if (!composing && input.value) {
+          sendText();
+          clearAfterSend();
+        }
       }, 300);
     }
   });
@@ -393,23 +424,22 @@
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(function() {
       debounceTimer = null;
+      if (!input.value) return;
       sendText();
+      clearAfterSend();
     }, 800);
   });
 
   // ── 按钮事件绑定 ──
 
-  // 重新上屏：先通知后端重置状态，再发送全部内容，然后清空输入框
+  // 发送：手动发送完整内容到电脑（两种模式都可用），发送后清空输入框
   document.getElementById('btnSend').addEventListener('click', function() {
-    var text = input.value;
-    if (!text) return;
-    send('__RESEND__');
+    if (!input.value) return;
     sendText();
-    input.value = '';
-    input.focus();
+    clearAfterSend();
   });
 
-  // 发送退格：本地删最后一个字符 + 通知后端发送退格指令
+  // 退格：删除手机输入框最后一个字符，并向电脑发送一次退格（唯一显式删除操作）
   document.getElementById('btnBackspace').addEventListener('click', function() {
     var v = input.value;
     if (v) {
@@ -418,7 +448,7 @@
       input.value = runes.join('');
     }
     send('__BACKSPACE__');
-    input.focus();
+    focusInput();
   });
 
   // 发送回车：通知后端按回车，清空输入框
@@ -426,21 +456,40 @@
     send('__ENTER__');
     input.value = '';
     lastSent = '';
-    input.focus();
-  });
-
-  // 清空输入框
-  document.getElementById('btnClear').addEventListener('click', function() {
-    input.value = '';
-    lastSent = '';
-    input.focus();
+    focusInput();
   });
 
   // 点击空白区域自动聚焦输入框（弹出键盘）
-  document.querySelector('.app').addEventListener('click', function(e) {
-    if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON' && e.target.closest('.switch-track') === null) {
-      input.focus();
-    }
+  // 连上鼠标时 Android 可能不弹键盘，需额外触发 selection 来唤起
+  function focusInput() {
+    input.focus();
+    // 强制设置选区，Android 连鼠标时帮助唤起键盘
+    try { input.setSelectionRange(input.value.length, input.value.length); } catch(e) {}
+  }
+
+  // Android WebView 会在右键事件结束后继续执行“返回并收起键盘”，
+  // 同步 focus() 会被覆盖，因此先失焦，再等系统动作结束后重新聚焦。
+  function reopenKeyboard() {
+    input.blur();
+    setTimeout(function() {
+      focusInput();
+      // 切换 inputmode，促使旧版 Android WebView 重新创建软键盘连接
+      input.setAttribute('inputmode', 'none');
+      input.offsetHeight;
+      input.setAttribute('inputmode', 'text');
+      focusInput();
+      if (navigator.virtualKeyboard && navigator.virtualKeyboard.show) {
+        try { navigator.virtualKeyboard.show(); } catch(e) {}
+      }
+    }, 120);
+  }
+
+  document.addEventListener('click', function(e) {
+    // 点到输入框、按钮、滑块时忽略
+    if (e.target.tagName === 'TEXTAREA') return;
+    if (e.target.tagName === 'BUTTON') return;
+    if (e.target.closest('.mode-switch') !== null) return;
+    focusInput();
   });
 
   // ── 键盘弹出时压缩中间空白区，保持顶部固定 ──
@@ -471,6 +520,36 @@
       setTimeout(onViewportChange, 200);
     });
   }
+
+  // ── 鼠标右键 / 侧键返回 → 改为发送回车 ──
+  // Logitech MX Master 3S 在 Android 上按右键/侧键触发系统返回。
+  // contextmenu 拦截右键菜单，popstate 兜住系统返回导致的页面后退。
+
+  // 1. 右键菜单 → 发送回车
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    if (connected) {
+      send('__ENTER__');
+      input.value = '';
+      lastSent = '';
+      // 保持在右键事件的用户手势内重新唤起软键盘
+      reopenKeyboard();
+    }
+  });
+
+  // 2. 系统返回 → 留在当前页 + 发送回车
+  //    每次回退时 push 新状态，阻止浏览器离开页面
+  window.addEventListener('popstate', function() {
+    history.pushState(null, '', location.href);
+    if (connected) {
+      send('__ENTER__');
+      input.value = '';
+      lastSent = '';
+      focusInput();
+    }
+  });
+  // 初始状态，给 popstate 第一次拦截的机会
+  history.pushState(null, '', location.href);
 
   // 启动
   connect();

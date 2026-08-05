@@ -1,10 +1,13 @@
 .PHONY: build deploy
 
 build:
-	# -H=windowsgui 不弹出命令行黑框 -w 去掉调试信息 -s 去掉符号信息
+	@echo "==> windres: embed icon resource into exe (taskbar icon)"
+	windres icon.rc -O coff -o rsrc_windows_amd64.syso
+	@echo "==> go build: mkinput.exe (windowsgui, stripped)"
 	go build -ldflags "-H=windowsgui -w -s" -o build/mkinput.exe .
+	@echo "==> Done: build/mkinput.exe"
 
-# 部署：将编译产物复制到 D:\Program Files\mkinput
+# Deploy: copy build output to D:\Program Files\mkinput
 deploy:
 	@if [ ! -f "build/mkinput.exe" ]; then \
 		echo "[ERROR] build/mkinput.exe not found, run 'make build' first"; \

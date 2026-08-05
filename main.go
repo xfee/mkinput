@@ -343,8 +343,9 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-// wsHandler 处理 WebSocket 连接，接收手机端输入的文本
-// 核心逻辑：计算新旧文本的公共前缀 → 退格删除不同部分 → 输入新增部分
+// wsHandler 处理 WebSocket 连接，接收手机端输入的文本。
+// 原则：以追加输入（文本 / 回车）为主；删除电脑文本仅通过用户显式点击"退格"触发，
+// 程序不会自动删除或整体替换电脑已有内容。
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 	// 将 HTTP 连接升级为 WebSocket 长连接
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -367,7 +368,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		clientInfoCh <- current
 	}()
 
-	// lastInput 记录该客户端上一次发送的文本，用于增量 diff 计算
+	// lastInput 记录该客户端上一次接收的文本，仅用于去重
 	var lastInput string
 
 	// 持续读取 WebSocket 消息
@@ -375,11 +376,22 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			break
-		}
-		text := string(message)
+			}
+			text := string(message)
 
-		// 处理特殊指令
-		if text == "__ENTER__" {
+			// 用户显式点击"退格"：向电脑发送一次退格（删除光标前一个字符）
+			if text == "__BACKSPACE__" {
+				if err := keyboard.SendBackspace(); err != nil {
+					log.Printf("⚠️ 退格失败: %v", err)
+				}
+				r := []rune(lastInput)
+				if len(r) > 0 {
+					lastInput = string(r[:len(r)-1])
+				}
+				continue
+			}
+			// 处理特殊指令
+			if text == "__ENTER__" {
 			// 发送回车键
 			if err := keyboard.SendEnter(); err != nil {
 				log.Printf("⚠️ 回车失败: %v", err)
@@ -387,19 +399,8 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			lastInput = ""
 			continue
 		}
-		if text == "__BACKSPACE__" {
-			// 发送一次退格
-			if err := keyboard.SendBackspace(1); err != nil {
-				log.Printf("⚠️ 退格失败: %v", err)
-			}
-			r := []rune(lastInput)
-			if len(r) > 0 {
-				lastInput = string(r[:len(r)-1])
-			}
-			continue
-		}
-		if text == "__RESEND__" {
-			// 重置，让下一次文本作为全新内容发送
+		if text == "__CLEARED__" {
+			// 手机输入框已清空：重置去重基准，允许相同内容再次发送
 			lastInput = ""
 			continue
 		}
@@ -409,32 +410,9 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("📩 收到输入 [#%d]: %s", count, text)
 
-		// 增量 diff 算法：计算新旧文本的公共前缀长度
-		oldR := []rune(lastInput)
-		newR := []rune(text)
-		prefixLen := 0
-		minLen := len(oldR)
-		if len(newR) < minLen {
-			minLen = len(newR)
-		}
-		for prefixLen < minLen && oldR[prefixLen] == newR[prefixLen] {
-			prefixLen++
-		}
-
-		// 先退格删除旧文本中超出公共前缀的部分
-		if prefixLen < len(oldR) {
-			deleteCount := len(oldR) - prefixLen
-			if err := keyboard.SendBackspace(deleteCount); err != nil {
-				log.Printf("⚠️ 退格删除失败: %v", err)
-			}
-		}
-
-		// 再输入新文本中新增的部分
-		toSend := string(newR[prefixLen:])
-		if toSend != "" {
-			if err := keyboard.SendText(toSend); err != nil {
-				log.Printf("⚠️ 输入失败: %v", err)
-			}
+		// 纯追加：把完整文本输入到电脑光标处，不做任何删除/退格/替换
+		if err := keyboard.SendText(text); err != nil {
+			log.Printf("⚠️ 输入失败: %v", err)
 		}
 		lastInput = text
 	}

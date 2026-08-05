@@ -65,10 +65,10 @@
   <text x="565" y="137" text-anchor="middle" font-size="11" fill="#4ade80">HTTP + WebSocket</text>
 
   <rect x="445" y="156" width="240" height="85" rx="8" fill="#fff" stroke="#bbf7d0" stroke-width="1.5"/>
-  <text x="565" y="178" text-anchor="middle" font-size="13" font-weight="600" fill="#475569">文本差异比较</text>
-  <text x="465" y="198" font-size="11" fill="#64748b">1. 计算公共前缀</text>
-  <text x="465" y="216" font-size="11" fill="#64748b">2. 退格删除旧后缀</text>
-  <text x="465" y="234" font-size="11" fill="#64748b">3. 发送新文字 / 回车</text>
+  <text x="565" y="178" text-anchor="middle" font-size="13" font-weight="600" fill="#475569">追加为主 · 显式退格</text>
+  <text x="465" y="198" font-size="11" fill="#64748b">文字 / 回车追加到光标处</text>
+  <text x="465" y="216" font-size="11" fill="#64748b">退格按钮点击才删除</text>
+  <text x="465" y="234" font-size="11" fill="#64748b">发送后手机输入框自动清空</text>
 
   <rect x="445" y="252" width="240" height="85" rx="8" fill="#fefce8" stroke="#fde68a" stroke-width="1.5"/>
   <text x="565" y="274" text-anchor="middle" font-size="13" font-weight="600" fill="#92400e">Windows SendInput API</text>
