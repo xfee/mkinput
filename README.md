@@ -85,17 +85,16 @@ mkinput/
 ### 本地运行
 
 ```bash
+# 运行项目
 go run .
-热更新开发
+
+# 热更新开发
 go install github.com/air-verse/air@latest
-
 air
-编译发布
-go build -ldflags -H=windowsgui -o build/mkinput.exe .
-发布版本
-git push origin v1.2.0
 
-gh release create v1.2.0 build/mkinput.exe -t "v1.2.0"
+# 编译发布
+go build -ldflags -H=windowsgui -o build/mkinput.exe .
+
 
 ```
 
